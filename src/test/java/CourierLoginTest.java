@@ -7,16 +7,19 @@ import static org.hamcrest.Matchers.*;
 
 
 public class CourierLoginTest extends CourierTest {
-
     @Test
     public void courierCanAuthorize() {
-        Courier courier = new Courier("eugenymc07", "1234", "saske123");
-        createCourier(courier);
-        Response response = logIn(courier);
-        response.then().assertThat().statusCode(200)
-                .and().body("id", notNullValue());
-        int courierId = getCourierIdFromResponseBody(response);
-        removeCreatedCourierById(courierId);
+
+        Courier courier = new Courier(faker.name().username(),
+                                      faker.internet().password(),faker.name().firstName());
+        courierSteps.createCourier(courier);
+        Response response = courierSteps.logIn(courier);
+        response.then().assertThat()
+                .statusCode(200)
+                .and()
+                .body("id", notNullValue());
+        int courierId = courierSteps.getCourierIdFromResponseBody(response);
+        courierSteps.removeCreatedCourierById(courierId);
     }
 
     @Test
@@ -24,8 +27,8 @@ public class CourierLoginTest extends CourierTest {
     @Description("When trying to log in courier without all required fields it is supposed to get and" +
             " 400 error status code and reporting message")
     public void whenLoggingInCourierWithoutRequiredField() {
-        Courier courier = new Courier("eugenymc07");
-        logIn(courier)
+        Courier courier = new Courier(faker.name().username());
+        courierSteps.logIn(courier)
                 .then()
                 .assertThat()
                 .body("message", equalTo("Недостаточно данных для входа"))
@@ -38,18 +41,19 @@ public class CourierLoginTest extends CourierTest {
     @Description("When trying to log in courier with correct login and incorrect password it is supposed" +
             " to get and 404 error status code and reporting message")
     public void whenLoggingInCourierWithCorrectLoginAndIncorrectPasswordReturnsError() {
-        Courier courier1 = new Courier("eugenymc07", "1234");
-        createCourier(courier1);
-        Response response = logIn(courier1);
-        int createdCourierId = getCourierIdFromResponseBody(response);
-        Courier courier2 = new Courier("eugenymc07", "12345");
-        logIn(courier2)
+        String login = faker.name().username();
+        Courier courier1 = new Courier(login, faker.internet().password());
+        courierSteps.createCourier(courier1);
+        Response response = courierSteps.logIn(courier1);
+        int createdCourierId = courierSteps.getCourierIdFromResponseBody(response);
+        Courier courier2 = new Courier(login, faker.internet().password());
+        courierSteps.logIn(courier2)
                 .then()
                 .assertThat()
                 .body("message", equalTo("Учетная запись не найдена"))
                 .and()
                 .statusCode(404);
-        removeCreatedCourierById(createdCourierId);
+        courierSteps.removeCreatedCourierById(createdCourierId);
     }
 
     @Test
@@ -57,8 +61,8 @@ public class CourierLoginTest extends CourierTest {
     @Description("When trying to log in unregistered courier it is supposed to get and" +
             " 404 error status code and reporting message")
     public void whenLoggingInUnregisteredCourier() {
-        Courier courier = new Courier("avadvsdfssgsdgsgdsgadsfsad", "12345");
-        logIn(courier)
+        Courier courier = new Courier(faker.name().username(), faker.internet().password());
+        courierSteps.logIn(courier)
                 .then()
                 .assertThat()
                 .body("message", equalTo("Учетная запись не найдена"))
@@ -70,9 +74,9 @@ public class CourierLoginTest extends CourierTest {
     @DisplayName("Log in to return id")
     @Description("When courier is successfully logged in it is supposed to be returned courier id")
     public void checkSuccessfulLoggingInReturnsCourierId() {
-        Courier courier = new Courier("eugenymc07", "1234");
-        createCourier(courier);
-        Response response = logIn(courier);
+        Courier courier = new Courier(faker.name().username(), faker.internet().password());
+        courierSteps.createCourier(courier);
+        Response response = courierSteps.logIn(courier);
         response.then()
                 .assertThat()
                 .body("id", notNullValue());

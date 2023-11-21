@@ -1,42 +1,47 @@
 import static org.hamcrest.Matchers.*;
 import io.qameta.allure.junit4.DisplayName;
 import io.restassured.response.Response;
+import model.pojo.Color;
+import model.pojo.Order;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import java.io.File;
 
 @RunWith(Parameterized.class)
 public class OrderCreationTest extends OrderTest {
 
-    private final File json;
-    private final int statusCode;
+    private final Order order;
 
-    public OrderCreationTest(File orderData, int statusCode) {
-        this.json = orderData;
-        this.statusCode = statusCode;
+    public OrderCreationTest(Order order) {
+        this.order = order;
     }
 
     @Parameterized.Parameters
     public static Object[][] testData() {
+        Order orderWithBothColors = orderSteps.createRandomOrderWithColors(Color.GREY, Color.GREY);
+        Order orderWithNoColors = orderSteps.createRandomOrderWithColors();
+        Order orderWithOnlyGrey = orderSteps.createRandomOrderWithColors(Color.GREY);;
+        Order orderWithOnlyBlack = orderSteps.createRandomOrderWithColors(Color.BLACK);;
+
         return new Object[][] {
-                {new File(resourcesPath + "order-data-both-colors.json"), 201},
-                {new File(resourcesPath + "order-data-no-color.json"), 201},
-                {new File(resourcesPath + "order-data-only-black-color.json"), 201},
-                {new File(resourcesPath + "order-data-only-grey-color.json"), 201}
+                {orderWithBothColors},
+                {orderWithNoColors},
+                {orderWithOnlyBlack},
+                {orderWithOnlyGrey}
         };
+
     }
 
     @Test
     @DisplayName("Trying to make order with different combinations of colors")
     public void shouldProceedAnyCombinationOfColors() {
-        Response response = createOrder(json);
+        Response response = orderSteps.createOrder(order);
         response.then()
                 .assertThat()
                 .body("track", notNullValue())
                 .and()
-                .statusCode(statusCode);
-        int track = getOrderTrackFromResponseBody(response);
-        cancelOrder(track);
+                .statusCode(201);
+        int track = orderSteps.getOrderTrackFromResponseBody(response);
+        orderSteps.cancelOrder(track);
     }
 }
